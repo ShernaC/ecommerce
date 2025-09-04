@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  users:
+    image: ecommerce-users
+    container_name: users
+    # Build the image from the Dockerfile in the users directory
+    build: 
+      context: .
+      # Explicitly point to the Dockerfile within that context
+      dockerfile: users/Dockerfile
+    ports:
+      # Map the gRPC port for internal/external access
+      - "50051:50051"
+      # Map the REST API port to avoid conflict with the products service
+      - "${USER_SERVICE_PORT}:8080"
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${USER_DB_DATABASE}
+      - GRPC_PORT=${GRPC_PORT}
+    networks:
+      - ecommerce-network
+
+  products:
+    build: 
+      context: .
+      # Explicitly point to the Dockerfile within that context
+      dockerfile: products/Dockerfile
+    ports:
+      - "${PRODUCT_SERVICE_PORT}:8080"
+    # wait for the users service to start before starting this one
+    depends_on:
+      - users
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${PRODUCT_DB_DATABASE}
+      - GRPC_HOST=${USER_GRPC}
+    networks:
+      - ecommerce-network
+
+# Define the network to allow communication between services
+networks:
+  ecommerce-network:
+    driver: bridge
