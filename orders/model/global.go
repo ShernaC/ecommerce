@@ -1,6 +1,6 @@
 package model
 
 type GlobalResponse struct {
-	Success string `json:"success"`
+	Success bool   `json:"success"`
 	Message string `json:"message"`
 }

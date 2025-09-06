@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"orders/model"
 	"os"
 	"time"
 
@@ -18,8 +19,7 @@ var (
 )
 
 func ConnectDB() {
-	var dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&interpolateParams=true", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("PRODUCT_DB_DATABASE"))
-
+	var dsn = fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true&interpolateParams=true", os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("ORDER_DB_DATABASE"))
 	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: logger.New(
 			log.New(os.Stdout, "\r\n", log.LstdFlags),
@@ -58,5 +58,8 @@ func GetDB() *gorm.DB {
 }
 
 func SyncDB() {
-
+	db.AutoMigrate(&model.Cart{})
+	db.AutoMigrate(&model.CartItem{})
+	db.AutoMigrate(&model.Order{})
+	db.AutoMigrate(&model.OrderItem{})
 }

@@ -48,6 +48,26 @@ services:
     networks:
       - ecommerce-network
 
+  orders:
+    build:
+      context: .
+      dockerfile: orders/Dockerfile
+    ports:
+      - "${ORDERS_SERVICE_PORT}:8080"
+    depends_on:
+      - products
+    env_file:
+      - .env
+    environment:
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${ORDER_DB_DATABASE}
+      - GRPC_HOST=${PRODUCT_GRPC}
+    networks:
+      - ecommerce-network  
+
 # Define the network to allow communication between services
 networks:
   ecommerce-network:
