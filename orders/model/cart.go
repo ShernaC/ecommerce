@@ -30,3 +30,9 @@ type NewCartItem struct {
 	Quantity  int     `json:"quantity"`
 	Price     float64 `json:"price"`
 }
+
+type CartResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Data    Cart   `json:"data"`
+}
