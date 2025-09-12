@@ -8,6 +8,7 @@ type User struct {
 	Password      string     `json:"password" gorm:"type:varchar(100);not null"`
 	Email         string     `json:"email" gorm:"type:varchar(100);unique;not null"`
 	Phone         string     `json:"phone" gorm:"type:varchar(20);not null"`
+	Address       *string    `json:"address" gorm:"type:varchar(255);null"`
 	RememberToken *string    `json:"remember_token" gorm:"type:varchar(100);null"`
 	CreatedAt     time.Time  `json:"created_at" gorm:"type:timestamp;not null"`
 	UpdatedAt     *time.Time `json:"updated_at" gorm:"type:timestamp;null"`
@@ -19,6 +20,7 @@ type UserData struct {
 	Name      string    `json:"name"`
 	Email     string    `json:"email"`
 	Phone     string    `json:"phone"`
+	Address   *string   `json:"address"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -27,6 +29,7 @@ type NewUser struct {
 	Password        string `json:"password"`
 	Email           string `json:"email"`
 	Phone           string `json:"phone"`
+	Address         string `json:"address"`
 	ConfirmPassword string `json:"confirm_password"`
 }
 

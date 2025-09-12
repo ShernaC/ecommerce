@@ -31,6 +31,7 @@ func (s *Service) UserRegister(ctx context.Context, input model.NewUser) (*model
 		Email:    input.Email,
 		Password: hashedPw,
 		Phone:    input.Phone,
+		Address:  &input.Address,
 	}
 
 	if err := s.DB.Model(&user).Create(&user).Error; err != nil {
