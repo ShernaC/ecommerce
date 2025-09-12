@@ -30,9 +30,33 @@ type OrderItem struct {
 }
 
 type NewOrderItem struct {
-	OrderID         int     `json:"order_id"`
-	ProductID       int     `json:"product_id"`
-	Quantity        int     `json:"quantity"`
-	PriceAtPurchase float64 `json:"price_at_purchase"`
-	ProductSnapshot string  `json:"product_snapshot"`
+	OrderID         int         `json:"order_id"`
+	ProductID       int         `json:"product_id"`
+	Quantity        int         `json:"quantity"`
+	PriceAtPurchase float64     `json:"price_at_purchase"`
+	ProductSnapshot string      `json:"product_snapshot"`
+	ID              int         `json:"id" gorm:"type:int;primaryKey;autoIncrement"`
+	UserID          int         `json:"user_id" gorm:"type:int;unique;not null"`
+	Status          string      `json:"status" gorm:"type:varchar(50);not null"`
+	TotalAmount     float64     `json:"total_amount" gorm:"type:decimal(10,2);not null;"`
+	ShippingAddress string      `json:"shipping_address" gorm:"type:varchar(255);not null"`
+	PaymentMethod   string      `json:"payment_method" gorm:"type:varchar(255);not null"`
+	CreatedAt       time.Time   `json:"created_at" gorm:"type:timestamp;not null"`
+	UpdatedAt       *time.Time  `json:"updated_at" gorm:"type:timestamp;null"`
+	DeletedAt       *time.Time  `json:"deleted_at" gorm:"type:timestamp;null"`
+	Items           []OrderItem `json:"items" gorm:"foreignKey:OrderID;constraint:OnDelete:CASCADE"`
+}
+
+type OrderResponse struct {
+	Success bool     `json:"success"`
+	Message string   `json:"message"`
+	Data    []*Order `json:"data"`
+}
+
+type OrderTracking struct {
+	ID          int       `json:"id" gorm:"type:int;primaryKey;autoIncrement"`
+	OrderID     int       `json:"order_id" gorm:"type:int;unique;not null"`
+	Status      string    `json:"status" gorm:"type:varchar(100);not null"`
+	Description string    `json:"description" gorm:"type:varchar(100);not null"`
+	Created_at  time.Time `json:"created_at" gorm:"type:timestamp;not null"`
 }

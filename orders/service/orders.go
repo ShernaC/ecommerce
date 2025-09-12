@@ -6,6 +6,7 @@ import (
 	grpcclient "orders/grpc_client"
 	"orders/middleware"
 	"orders/model"
+	"products/tools"
 	"utils/user"
 )
 
@@ -152,12 +153,15 @@ func (s *Service) CheckOrderExists(ctx context.Context, orderID int) (bool, erro
 	return count > 0, nil
 }
 
-// ID
-// OrderID
-// ProductID
-// Quantity
-// PriceAtPurchase
-// ProductSnapshot
-// CreatedAt
-// UpdatedAt
-// DeletedAt
+func (s *Service) OrderGetHistoryByUserID(ctx context.Context) ([]*model.Order, error) {
+	var (
+		orders  []*model.Order
+		ctxData = middleware.AuthContext(ctx)
+	)
+
+	if err := s.DB.Model(&orders).Scopes(tools.IsDeletedAtNull).Where("user_id = ?", ctxData.ID).Scan(&orders).Error; err != nil {
+		return nil, err
+	}
+
+	return orders, nil
+}
