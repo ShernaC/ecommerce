@@ -4,8 +4,8 @@ import (
 	"log"
 	"orders/config"
 	"orders/middleware"
+	"orders/router"
 	"os"
-	"users/router"
 
 	"github.com/gin-gonic/gin"
 )

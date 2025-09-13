@@ -11,6 +11,7 @@ COPY go.work go.work.sum ./
 # Copy all go.mod files first for better caching
 COPY users/go.mod users/go.sum ./users/
 COPY products/go.mod products/go.sum ./products/
+COPY orders/go.mod orders/go.sum ./orders/
 COPY utils/go.mod utils/go.sum ./utils/
 
 # Download all dependencies
@@ -20,6 +21,7 @@ RUN go mod download
 # Copy the rest of the source code
 COPY users/ ./users/
 COPY products/ ./products/
+COPY orders/ ./orders/
 COPY utils/ ./utils/
 
 # Build the Go app as a static binary for small size

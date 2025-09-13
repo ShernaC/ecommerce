@@ -5,7 +5,7 @@ FROM golang:1.24-alpine AS builder
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy go.mod and go.sum files to cache dependencies
+# Copy go.work and go.sum files to cache dependencies
 COPY go.work go.work.sum ./
 
 # Copy all go.mod files first for better caching
@@ -25,7 +25,7 @@ COPY orders/ ./orders/
 COPY utils/ ./utils/
 
 # Build the Go app as a static binary for small size
-RUN CGO_ENABLED=0 GOOS=linux go build -o main ./users
+RUN CGO_ENABLED=0 GOOS=linux go build -o main ./orders
 
 # Production Environment
 FROM alpine:latest
@@ -35,11 +35,8 @@ WORKDIR /root/
 # Set working directory
 COPY --from=builder /app/main .
 
-# Expose the gRPC port
-EXPOSE 50051
-
 # Expose REST port
-EXPOSE 8080
+EXPOSE 8282
 
 # The command to run the application
 CMD ["./main"]

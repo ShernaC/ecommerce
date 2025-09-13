@@ -27,6 +27,7 @@ services:
       - ecommerce-network
 
   products:
+    image: ecommerce-products
     build: 
       context: .
       # Explicitly point to the Dockerfile within that context
@@ -49,11 +50,12 @@ services:
       - ecommerce-network
 
   orders:
+    image: ecommerce-orders
     build:
       context: .
       dockerfile: orders/Dockerfile
     ports:
-      - "${ORDERS_SERVICE_PORT}:8080"
+      - "${ORDER_SERVICE_PORT}:8080"
     depends_on:
       - products
     env_file:

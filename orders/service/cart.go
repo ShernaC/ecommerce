@@ -6,8 +6,9 @@ import (
 	grpcclient "orders/grpc_client"
 	"orders/middleware"
 	"orders/model"
-	"products/tools"
 	"utils/product"
+
+	"gorm.io/gorm"
 )
 
 func (s *Service) AddToCart(ctx context.Context, newItem model.CartItemInput) (bool, error) {
@@ -63,12 +64,14 @@ func (s *Service) CartGetDetails(ctx context.Context) (*model.Cart, error) {
 		return nil, fmt.Errorf("unauthorised user")
 	}
 
-	if err := s.DB.Model(&cart).Scopes(tools.IsDeletedAtNull).Where("user_id = ?", user.ID).First(&cart).Error; err != nil {
+	if err := s.DB.Model(&cart).Where("user_id = ?", user.ID).First(&cart).Error; err != nil {
 		return nil, err
 	}
 
 	cartItems, err := s.CartGetItemsByCartID(ctx, cart.ID)
-	if err != nil {
+	if cartItems == nil {
+		cartItems = []*model.CartItem{}
+	} else if err != nil {
 		return nil, err
 	}
 
@@ -87,7 +90,7 @@ func (s *Service) CartGetItemDetails(ctx context.Context, cartID int, itemID int
 		return nil, fmt.Errorf("unauthorised user")
 	}
 
-	if err := s.DB.Model(&cartItem).Scopes(tools.IsDeletedAtNull).Where("cart_id = ? AND id = ?", cartID, itemID).Find(&cartItem).Error; err != nil {
+	if err := s.DB.Model(&cartItem).Where("cart_id = ? AND id = ?", cartID, itemID).Find(&cartItem).Error; err != nil {
 		return nil, err
 	}
 
@@ -104,7 +107,10 @@ func (s *Service) CartGetItemsByCartID(ctx context.Context, cartID int) ([]*mode
 		return nil, fmt.Errorf("unauthorised user")
 	}
 
-	if err := s.DB.Model(&cartItems).Scopes(tools.IsDeletedAtNull).Where("cart_id = ?", cartID).Scan(&cartItems).Error; err != nil {
+	err := s.DB.Model(&cartItems).Where("cart_id = ?", cartID).Scan(&cartItems).Error
+	if err == gorm.ErrRecordNotFound {
+		return []*model.CartItem{}, nil
+	} else if err != nil {
 		return []*model.CartItem{}, err
 	}
 
