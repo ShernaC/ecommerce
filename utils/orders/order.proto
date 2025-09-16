@@ -2,10 +2,18 @@ syntax = "proto3";
 
 package orders;
 
-option go_package = "/utils/orders"
+option go_package = "/utils/orders";
 
 service Order {
-    rpc GetCartDetails (CartRequest) returns (CartResponse);
+    rpc CreateCart (CreateCartRequest) returns (CreateCartResponse);
+}
+
+message CreateCartRequest {
+    int64 user_id = 1;
+}
+
+message CreateCartResponse {
+    bool success = 1;
 }
 
 message CartItem {
@@ -21,7 +29,7 @@ message CartResponse {
     int64 user_id = 2;
     string created_at = 3;
     string updated_at = 4;
-    repeated Cartitem cartItems = 5;
+    repeated CartItem cartItems = 5;
 }
 
 message CartRequest {
