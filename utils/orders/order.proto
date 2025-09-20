@@ -29,7 +29,7 @@ message CartResponse {
     int64 user_id = 2;
     string created_at = 3;
     string updated_at = 4;
-    repeated CartItem cartItems = 5;
+    repeated CartItem cart_items = 5;
 }
 
 message CartRequest {

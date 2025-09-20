@@ -6,7 +6,7 @@ import (
 
 type Order struct {
 	ID              int          `json:"id" gorm:"type:int;primaryKey;autoIncrement"`
-	UserID          int          `json:"user_id" gorm:"type:int;unique;not null"`
+	UserID          int          `json:"user_id" gorm:"type:int;not null"`
 	Status          string       `json:"status" gorm:"type:varchar(50);not null"`
 	TotalAmount     float64      `json:"total_amount" gorm:"type:decimal(10,2);not null;"`
 	ShippingAddress string       `json:"shipping_address" gorm:"type:varchar(255);not null"`
@@ -19,9 +19,9 @@ type Order struct {
 
 type OrderItem struct {
 	ID              int        `json:"id" gorm:"type:int;primaryKey;autoIncrement"`
-	OrderID         int        `json:"order_id" gorm:"type:int;unique;not null"`
-	ProductID       int        `json:"product_id" gorm:"type:int;unique;not null"`
-	Quantity        int        `json:"quantity" gorm:"type:int;unique;not null"`
+	OrderID         int        `json:"order_id" gorm:"type:int;not null"`
+	ProductID       int        `json:"product_id" gorm:"type:int;not null"`
+	Quantity        int        `json:"quantity" gorm:"type:int;not null"`
 	PriceAtPurchase float64    `json:"price_at_purchase" gorm:"type:decimal(10,2);not null;"`
 	ProductSnapshot string     `json:"product_snapsho" gorm:"type:string;not null"`
 	CreatedAt       time.Time  `json:"created_at" gorm:"type:timestamp;not null"`
@@ -59,4 +59,17 @@ type OrderTracking struct {
 	Status      string    `json:"status" gorm:"type:varchar(100);not null"`
 	Description string    `json:"description" gorm:"type:varchar(100);not null"`
 	Created_at  time.Time `json:"created_at" gorm:"type:timestamp;not null"`
+}
+
+type ProductSnapshot struct {
+	ID              int       `json:"id"`
+	Name            string    `json:"name"`
+	Description     string    `json:"description"`
+	SellerID        int       `json:"seller_id"`
+	ShopName        string    `json:"shop_name"`
+	PriceAtPurchase float64   `json:"price_at_purchase"`
+	SKU             string    `json:"sku"`
+	PrimaryImage    *string   `json:"primary_image"`
+	TaxCategory     *string   `json:"tax_category"`
+	CapturedAt      time.Time `json:"captured_at"`
 }

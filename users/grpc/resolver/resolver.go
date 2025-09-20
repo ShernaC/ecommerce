@@ -38,3 +38,18 @@ func (s *Server) GetUserDetails(ctx context.Context, request *user.GetUserDetail
 
 	return resp, nil
 }
+
+func (s *Server) GetSellerDetails(ctx context.Context, request *user.GetSellerDetailsRequest) (*user.GetSellerDetailsResponse, error) {
+	sellerID := request.Id
+
+	seller, err := service.GetService().SellerGetByID(ctx, int(sellerID))
+	if err != nil {
+		return nil, err
+	}
+
+	resp := &user.GetSellerDetailsResponse{
+		BusinessName: seller.BusinessName,
+	}
+
+	return resp, nil
+}

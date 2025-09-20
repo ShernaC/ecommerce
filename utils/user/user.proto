@@ -7,6 +7,7 @@ option go_package = "/utils/user";
 service User {
     rpc CheckSellerExists (CheckSellerExistsRequest) returns (CheckSellerExistsResponse);
     rpc GetUserDetails (GetUserDetailsRequest) returns (GetUserDetailsResponse);
+    rpc GetSellerDetails (GetSellerDetailsRequest) returns (GetSellerDetailsResponse);
 }
 
 message Seller {
@@ -33,4 +34,12 @@ message GetUserDetailsResponse {
     string email = 2;
     string phone = 3;
     string address = 4;
+}
+
+message GetSellerDetailsRequest {
+    int64 id = 1;
+}
+
+message GetSellerDetailsResponse {
+    string business_name = 1;
 }

@@ -12,8 +12,8 @@ type Cart struct {
 
 type CartItem struct {
 	ID        int       `json:"id" gorm:"type:int;primaryKey;autoIncrement"`
-	CartID    int       `json:"cart_id" gorm:"type:int;unique;not null"`
-	ProductID int       `json:"product_id" gorm:"type:int;unique;not null"`
+	CartID    int       `json:"cart_id" gorm:"type:int;not null"`
+	ProductID int       `json:"product_id" gorm:"type:int;not null"`
 	Quantity  int       `json:"quantity" gorm:"type:int;not null"`
 	Price     float64   `json:"price" gorm:"type:decimal(10,2);not null"`
 	CreatedAt time.Time `json:"created_at" gorm:"type:timestamp;not null"`
@@ -29,6 +29,13 @@ type NewCartItem struct {
 	ProductID int     `json:"product_id"`
 	Quantity  int     `json:"quantity"`
 	Price     float64 `json:"price"`
+}
+
+type EditCartItem struct {
+	ID        int `json:"id"`
+	CartID    int `json:"cart_id"`
+	ProductID int `json:"product_id"`
+	Quantity  int `json:"quantity"`
 }
 
 type CartResponse struct {

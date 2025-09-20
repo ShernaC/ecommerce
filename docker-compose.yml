@@ -11,7 +11,7 @@ services:
       dockerfile: users/Dockerfile
     ports:
       # Map the gRPC port for internal/external access
-      - "50051:50051"
+      - "${USER_GRPC_PORT}:50051"
       # Map the REST API port to avoid conflict with the products service
       - "${USER_SERVICE_PORT}:8080"
     env_file:
@@ -22,21 +22,27 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${USER_DB_DATABASE}
-      - GRPC_PORT=${GRPC_PORT}
+
+      # - GRPC_HOST=${GRPC_HOST}
+      # - GRPC_PORT=${USER_GRPC_PORT}
+      
+      - ORDERS_SERVICE_HOST=orders
+      - ORDERS_SERVICE_PORT=${ORDER_GRPC_PORT}
+      - PRODUCTS_SERVICE_HOST=products
+      - PRODUCTS_SERVICE_PORT=${PRODUCT_GRPC_PORT}
     networks:
       - ecommerce-network
 
   products:
     image: ecommerce-products
+    container_name: products
     build: 
       context: .
       # Explicitly point to the Dockerfile within that context
       dockerfile: products/Dockerfile
     ports:
+      - "${PRODUCT_GRPC_PORT}:50051"
       - "${PRODUCT_SERVICE_PORT}:8080"
-    # wait for the users service to start before starting this one
-    depends_on:
-      - users
     env_file:
       - .env
     environment:
@@ -45,19 +51,26 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${PRODUCT_DB_DATABASE}
-      - GRPC_HOST=${USER_GRPC}
+      
+      # - GRPC_HOST=${GRPC_HOST}
+      # - GRPC_PORT=${PRODUCT_GRPC_PORT}
+      
+      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_PORT=${USER_GRPC_PORT}
+      - ORDERS_SERVICE_HOST=orders
+      - ORDERS_SERVICE_PORT=${ORDER_GRPC_PORT}
     networks:
       - ecommerce-network
 
   orders:
     image: ecommerce-orders
+    container_name: orders
     build:
       context: .
       dockerfile: orders/Dockerfile
     ports:
+      - "${ORDER_GRPC_PORT}:50051"
       - "${ORDER_SERVICE_PORT}:8080"
-    depends_on:
-      - products
     env_file:
       - .env
     environment:
@@ -66,7 +79,14 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - DB_NAME=${ORDER_DB_DATABASE}
-      - GRPC_HOST=${PRODUCT_GRPC}
+      
+      # - GRPC_HOST=${GRPC_HOST}
+      # - GRPC_PORT=${ORDER_GRPC_PORT}
+      
+      - USERS_SERVICE_HOST=users
+      - USERS_SERVICE_PORT=${USER_GRPC_PORT}
+      - PRODUCTS_SERVICE_HOST=products
+      - PRODUCTS_SERVICE_PORT=${PRODUCT_GRPC_PORT}
     networks:
       - ecommerce-network  
 

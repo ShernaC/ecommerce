@@ -3,22 +3,40 @@ package service
 import (
 	"context"
 	"fmt"
-	grpcclient "orders/grpc_client"
 	"orders/middleware"
 	"orders/model"
-	"utils/product"
 
 	"gorm.io/gorm"
 )
+
+func (s *Service) CreateCart(ctx context.Context, userID int) (bool, error) {
+	if userID <= 0 {
+		return false, fmt.Errorf("invalid user id")
+	}
+
+	var cart = model.Cart{
+		UserID: userID,
+	}
+
+	if err := s.DB.Model(&cart).Create(&cart).Error; err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
 
 func (s *Service) AddToCart(ctx context.Context, newItem model.CartItemInput) (bool, error) {
 	var (
 		user = middleware.AuthContext(ctx)
 	)
 
+	if newItem.ProductID <= 0 || newItem.Quantity <= 0 {
+		return false, fmt.Errorf("invalid product ID or quantity")
+	}
+
 	cart, err := s.CartGetDetails(ctx)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to get cart: %w", err)
 	}
 
 	if user.ID == 0 || user.ID != cart.UserID {
@@ -26,9 +44,9 @@ func (s *Service) AddToCart(ctx context.Context, newItem model.CartItemInput) (b
 	}
 
 	// gRPC call to get product details
-	product, err := grpcclient.GetProductDetails(ctx, &product.GetProductDetailsRequest{Id: int64(user.ID)})
+	product, err := s.GetProductDetails(ctx, newItem.ProductID)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to get product details: %w", err)
 	}
 
 	// validate product
@@ -38,20 +56,19 @@ func (s *Service) AddToCart(ctx context.Context, newItem model.CartItemInput) (b
 
 	newItemDetails := model.NewCartItem{
 		CartID:    cart.ID,
-		ProductID: int(product.Id),
+		ProductID: int(product.ID),
 		Quantity:  newItem.Quantity,
 		Price:     product.Price,
 	}
 
 	item, err := s.CartCreateItem(ctx, newItemDetails)
 	if err != nil {
-		return false, err
+		panic(err)
 	}
 
 	cart.Items = append(cart.Items, item)
 
 	return true, nil
-
 }
 
 func (s *Service) CartGetDetails(ctx context.Context) (*model.Cart, error) {
@@ -117,10 +134,25 @@ func (s *Service) CartGetItemsByCartID(ctx context.Context, cartID int) ([]*mode
 	return cartItems, nil
 }
 
-func (s *Service) CartCreateItem(ctx context.Context, newItem model.NewCartItem) (*model.CartItem, error) {
-	if newItem.CartID <= 0 || newItem.ProductID <= 0 || newItem.Quantity <= 0 || newItem.Price <= 0 {
-		return nil, fmt.Errorf("input for item details cannot be empty")
+func (s *Service) CartGetItemsByIDs(ctx context.Context, cartItemIDs []int) ([]*model.CartItem, error) {
+	var (
+		cartItems []*model.CartItem
+	)
+
+	err := s.DB.Model(&cartItems).Where("id IN (?)", cartItemIDs).Scan(&cartItems).Error
+	if err == gorm.ErrRecordNotFound {
+		return []*model.CartItem{}, nil
+	} else if err != nil {
+		return []*model.CartItem{}, err
 	}
+
+	return cartItems, nil
+}
+
+func (s *Service) CartCreateItem(ctx context.Context, newItem model.NewCartItem) (*model.CartItem, error) {
+	// if newItem.CartID <= 0 || newItem.ProductID <= 0 || newItem.Quantity <= 0 || newItem.Price <= 0 {
+	// 	return nil, fmt.Errorf("input for item details cannot be empty")
+	// }
 
 	item := model.CartItem{
 		CartID:    newItem.CartID,
@@ -134,4 +166,36 @@ func (s *Service) CartCreateItem(ctx context.Context, newItem model.NewCartItem)
 	}
 
 	return &item, nil
+}
+
+func (s *Service) CartUpdateItem(ctx context.Context, itemDetails model.EditCartItem) (bool, error) {
+	if itemDetails.CartID <= 0 || itemDetails.ProductID <= 0 {
+		return false, fmt.Errorf("cart ID and item ID cannot be empty")
+	}
+
+	product, err := s.GetProductDetails(ctx, itemDetails.ProductID)
+	if err != nil {
+		return false, err
+	}
+
+	price := float64(itemDetails.Quantity) * product.Price
+
+	if err := s.DB.Table("cart_item").Where("id = ?", itemDetails.ID).UpdateColumns(model.CartItem{Quantity: itemDetails.Quantity, Price: price}).Error; err != nil {
+		return false, err
+	}
+
+	return true, nil
+
+}
+
+func (s *Service) CartRemoveItems(ctx context.Context, cartItemIDs []int) (bool, error) {
+	if len(cartItemIDs) <= 0 {
+		return false, fmt.Errorf("no selected items")
+	}
+
+	if err := s.DB.Table("cart_item").Delete(&model.CartItem{}, cartItemIDs).Error; err != nil {
+		return false, err
+	}
+
+	return true, nil
 }

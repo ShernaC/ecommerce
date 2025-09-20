@@ -9,6 +9,8 @@ type Product struct {
 	Description string     `json:"description" gorm:"type:text;"`
 	Price       float64    `json:"price" gorm:"type:decimal(10,2);not null;"`
 	Stock       int        `json:"stock" gorm:"type:int;not null;"`
+	ShopName    string     `json:"shop_name" gorm:"type:varchar(255);not null"`
+	SKU         *string    `json:"sku" gorm:"type:varchar(100);"`
 	CreatedAt   time.Time  `json:"created_at" gorm:"type:timestamp;not null"`
 	UpdatedAt   *time.Time `json:"updated_at" gorm:"type:timestamp;null"`
 	DeletedAt   *time.Time `json:"deleted_at" gorm:"type:timestamp;null"`

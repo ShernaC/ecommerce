@@ -6,6 +6,7 @@ option go_package = "/utils/product";
 
 service Product {
     rpc GetProductDetails (GetProductDetailsRequest) returns (GetProductDetailsResponse);
+    rpc UpdateStock (UpdateStockRequest) returns (UpdateStockResponse);
 }
 
 message GetProductDetailsResponse {
@@ -14,9 +15,20 @@ message GetProductDetailsResponse {
     string name = 3;          
     string description = 4;   
     double price = 5;        
-    int64 stock = 6;         
+    int64 stock = 6;
+    string sku = 7;
+    string shop_name = 8;        
 }
 
 message GetProductDetailsRequest {
     int64 id = 1;
+}
+
+message UpdateStockRequest {
+    int64 id = 1;
+    int64 qty_bought = 2;
+}
+
+message UpdateStockResponse {
+    bool success = 1;
 }

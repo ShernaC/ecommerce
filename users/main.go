@@ -32,7 +32,7 @@ func main() {
 		port = defaultPort
 	}
 
-	grpcPort := os.Getenv("GRPC_PORT")
+	grpcPort := os.Getenv("USER_GRPC_PORT")
 	if grpcPort == "" {
 		port = defaultGRPCPort
 	}
@@ -69,7 +69,7 @@ func main() {
 		s := grpc.NewServer()
 
 		user.RegisterUserServer(s, &resolver.Server{})
-		fmt.Println("running at " + port)
+		fmt.Println("running at " + grpcPort)
 		if err := s.Serve(lis); err != nil {
 			log.Fatalf("failed to serve: %v", err)
 		}

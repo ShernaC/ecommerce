@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	grpcclient "users/grpc_client"
 	"users/model"
 	"users/service"
+	"utils/orders"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +35,32 @@ func Register(c *gin.Context) {
 		}
 	}()
 
-	s.UserRegister(c.Request.Context(), input)
+	user, err := s.UserRegister(c.Request.Context(), input)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	// create cart here
+	success, err := grpcclient.CreateCart(c.Request.Context(), &orders.CreateCartRequest{UserId: int64(user.ID)})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !success.Success {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: "failed to create cart for user",
+		})
+		return
+	}
+
 	s.Commit()
 
 	c.JSON(http.StatusOK, &model.GlobalResponse{

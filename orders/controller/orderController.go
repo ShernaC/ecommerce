@@ -28,6 +28,7 @@ func GetCart(c *gin.Context) {
 				Success: false,
 				Message: err.Error(),
 			})
+			return
 		}
 	}()
 
@@ -79,7 +80,23 @@ func AddToCart(c *gin.Context) {
 		}
 	}()
 
-	s.AddToCart(c.Request.Context(), input)
+	status, err := s.AddToCart(c.Request.Context(), input)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+	if !status {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: "Failed to add to cart",
+		})
+		return
+	}
+
+	s.Commit()
 
 	c.JSON(http.StatusOK, &model.GlobalResponse{
 		Success: true,
@@ -87,9 +104,51 @@ func AddToCart(c *gin.Context) {
 	})
 }
 
+func UpdateCartItem(c *gin.Context) {
+	user := middleware.AuthContext(c.Request.Context())
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &model.GlobalResponse{
+			Success: false,
+			Message: "User is not logged in",
+		})
+		return
+	}
+
+	var input model.EditCartItem
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.JSON(http.StatusBadRequest, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	s := service.GetTransaction()
+	defer func() {
+		if r := recover(); r != nil {
+			err := s.Rollback(r)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+				Success: false,
+				Message: err.Error(),
+			})
+			return
+		}
+	}()
+
+	s.CartUpdateItem(c.Request.Context(), input)
+	s.Commit()
+
+	c.JSON(http.StatusOK, &model.GlobalResponse{
+		Success: true,
+		Message: "Cart updated successfully",
+	})
+}
+
 type CheckoutInput struct {
-	PaymentMethod string     `json:"payment_method"`
-	Cart          model.Cart `json:"cart"`
+	PaymentMethod string `json:"payment_method"`
+	CartID        int    `json:"cart_id"`
+	CartItemIDs   []int  `json:"cart_item_ids"`
 }
 
 func Checkout(c *gin.Context) {
@@ -126,8 +185,22 @@ func Checkout(c *gin.Context) {
 	}()
 
 	// Only create order once payment is successful
+	order, err := s.CreateOrder(c.Request.Context(), input.CartID, input.CartItemIDs, input.PaymentMethod)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
 
-	s.CreateOrder(c.Request.Context(), input.Cart, input.PaymentMethod)
+	s.Commit()
+
+	c.JSON(http.StatusOK, &model.OrderResponse{
+		Success: true,
+		Message: "Checked out successfully",
+		Data:    []*model.Order{order},
+	})
 }
 
 func GetOrderHistory(c *gin.Context) {

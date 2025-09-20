@@ -17,6 +17,7 @@ import (
 func ApiRouter(r *gin.Engine) {
 	r.GET("/cart", controller.GetCart)
 	r.POST("/cart", controller.AddToCart)
+	r.POST("/cart/update", controller.UpdateCartItem)
 	r.POST("/checkout", controller.Checkout)
 	r.GET("/orders", controller.GetOrderHistory)
 	r.GET("/orders/:id/track", controller.TrackOrder)

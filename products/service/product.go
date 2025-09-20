@@ -8,6 +8,8 @@ import (
 
 	"products/tools"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 func (s *Service) ProductCreate(ctx context.Context, newProd model.NewProduct) (*model.Product, error) {
@@ -19,17 +21,27 @@ func (s *Service) ProductCreate(ctx context.Context, newProd model.NewProduct) (
 		return nil, fmt.Errorf("error creating product")
 	}
 
+	seller, err := s.GetSellerDetails(newProd.SellerID)
+	if err != nil {
+		return nil, err
+	}
+
 	product := model.Product{
 		Name:        newProd.Name,
 		Description: newProd.Description,
 		Price:       newProd.Price,
 		Stock:       newProd.Stock,
 		SellerID:    newProd.SellerID,
+		ShopName:    seller.BusinessName,
 	}
 
 	if err := s.DB.Model(&product).Create(&product).Error; err != nil {
 		return nil, err
 	}
+
+	sku := tools.GenerateSKU(&product)
+	product.SKU = &sku
+	s.DB.Save(&product)
 
 	return &product, nil
 }
@@ -137,4 +149,18 @@ func (s *Service) ProductGetWithFilter(ctx context.Context, filter string) ([]*m
 	}
 
 	return products, nil
+}
+
+func (s *Service) ProductUpdateStock(ctx context.Context, id int, qty int) (bool, error) {
+	var product *model.Product
+
+	result := s.DB.Model(&product).Where("id = ?", id).Update("stock", gorm.Expr("stock - ?", qty))
+	if result.Error != nil {
+		return false, result.Error
+	}
+	if result.RowsAffected == 0 {
+		return false, fmt.Errorf("insufficient stock or stock not found")
+	}
+
+	return true, nil
 }
