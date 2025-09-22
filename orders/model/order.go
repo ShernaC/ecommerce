@@ -55,10 +55,16 @@ type OrderResponse struct {
 
 type OrderTracking struct {
 	ID          int       `json:"id" gorm:"type:int;primaryKey;autoIncrement"`
-	OrderID     int       `json:"order_id" gorm:"type:int;unique;not null"`
+	OrderID     int       `json:"order_id" gorm:"type:int;not null"`
 	Status      string    `json:"status" gorm:"type:varchar(100);not null"`
 	Description string    `json:"description" gorm:"type:varchar(100);not null"`
-	Created_at  time.Time `json:"created_at" gorm:"type:timestamp;not null"`
+	CreatedAt   time.Time `json:"created_at" gorm:"type:timestamp;not null"`
+}
+
+type OrderTrackingResponse struct {
+	Success bool             `json:"success"`
+	Message string           `json:"message"`
+	Data    []*OrderTracking `json:"data"`
 }
 
 type ProductSnapshot struct {

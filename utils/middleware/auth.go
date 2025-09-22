@@ -4,10 +4,9 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"orders/model"
-	"orders/tools"
 	"strings"
 	"time"
+	"utils/tools"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,7 +18,13 @@ type contextKey struct {
 }
 
 type User struct {
-	ID int `json:"id"`
+	ID   int    `json:"id"`
+	Role string `json:"role"`
+}
+
+type GlobalResponse struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -32,7 +37,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		authTokens := strings.Split(authToken, " ")
 		if authTokens == nil || authTokens[0] != "Bearer" {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, &model.GlobalResponse{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, GlobalResponse{
 				Success: false,
 				Message: "invalid authorisation token",
 			})
@@ -41,7 +46,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		token, err := tools.ValidateToken(authTokens[1])
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			c.AbortWithStatusJSON(http.StatusInternalServerError, GlobalResponse{
 				Success: false,
 				Message: "error validating token",
 			})
@@ -50,7 +55,7 @@ func AuthMiddleware() gin.HandlerFunc {
 
 		claims, ok := token.Claims.(*tools.Claims)
 		if !ok || !token.Valid {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			c.AbortWithStatusJSON(http.StatusInternalServerError, GlobalResponse{
 				Success: false,
 				Message: "error extracting token claims",
 			})
@@ -60,7 +65,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		exp := claims.ExpiresAt
 		if exp != 0 {
 			if time.Now().Unix() > int64(exp) {
-				c.AbortWithStatusJSON(http.StatusUnauthorized, &model.GlobalResponse{
+				c.AbortWithStatusJSON(http.StatusUnauthorized, GlobalResponse{
 					Success: false,
 					Message: "token expired",
 				})
@@ -69,7 +74,8 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		ctx := context.WithValue(c.Request.Context(), CtxKey, &User{
-			ID: claims.ID,
+			ID:   claims.ID,
+			Role: claims.Role,
 		})
 
 		c.Request = c.Request.WithContext(ctx)
@@ -86,7 +92,22 @@ func IsLogin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if AuthContext(c.Request.Context()) == nil {
 			log.Println("No context found")
-			c.AbortWithStatusJSON(http.StatusUnauthorized, &model.GlobalResponse{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, GlobalResponse{
+				Success: false,
+				Message: "Invalid token",
+			})
+			return
+		}
+		c.Next()
+	}
+}
+
+func IsSeller() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := AuthContext(c.Request.Context())
+		if user == nil || user.Role != "seller" {
+			log.Println("No context found")
+			c.AbortWithStatusJSON(http.StatusUnauthorized, GlobalResponse{
 				Success: false,
 				Message: "Invalid token",
 			})

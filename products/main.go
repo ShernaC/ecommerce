@@ -7,9 +7,9 @@ import (
 	"os"
 	"products/config"
 	"products/grpc/resolver"
-	"products/middleware"
 	"products/router"
 	"sync"
+	"utils/middleware"
 	"utils/product"
 
 	"github.com/gin-gonic/gin"

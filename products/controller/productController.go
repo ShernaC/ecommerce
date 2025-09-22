@@ -2,9 +2,9 @@ package controller
 
 import (
 	"net/http"
-	"products/middleware"
 	"products/model"
 	"products/service"
+	"utils/middleware"
 
 	"github.com/gin-gonic/gin"
 )

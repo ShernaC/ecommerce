@@ -5,6 +5,7 @@ import (
 	"orders/middleware"
 	"orders/model"
 	"orders/service"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -262,4 +263,117 @@ func TrackOrder(c *gin.Context) {
 		}
 	}()
 
+	id := c.Param("id")
+	if id == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &model.GlobalResponse{
+			Success: false,
+			Message: "order ID is required",
+		})
+		return
+	}
+
+	orderID, err := strconv.Atoi(id)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &model.GlobalResponse{
+			Success: false,
+			Message: "invalid order ID",
+		})
+		return
+	}
+
+	trackingInfo, err := s.OrderGetTrackingInfo(orderID)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, &model.OrderTrackingResponse{
+		Success: true,
+		Message: "Order tracking info retrieved successfully",
+		Data:    trackingInfo,
+	})
+
+}
+
+type UpdateStatusInput struct {
+	Status string `json:"status"`
+}
+
+func UpdateOrderStatus(c *gin.Context) {
+	user := middleware.AuthContext(c.Request.Context())
+	if user == nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, &model.GlobalResponse{
+			Success: false,
+			Message: "user not logged in",
+		})
+		return
+	}
+
+	s := service.GetTransaction()
+	defer func() {
+		r := recover()
+		if r != nil {
+			err := s.Rollback(r)
+			c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+				Success: false,
+				Message: err.Error(),
+			})
+			return
+		}
+	}()
+
+	id := c.Param("id")
+	if id == "" {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &model.GlobalResponse{
+			Success: false,
+			Message: "order ID is required",
+		})
+		return
+	}
+
+	orderID, err := strconv.Atoi(id)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &model.GlobalResponse{
+			Success: false,
+			Message: "invalid order ID",
+		})
+		return
+	}
+
+	var input UpdateStatusInput
+
+	if err := c.ShouldBind(&input); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	status, err := s.OrderUpdateStatus(orderID, input.Status)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: err.Error(),
+		})
+		return
+	}
+
+	if !status {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, &model.GlobalResponse{
+			Success: false,
+			Message: "Failed to update order status",
+		})
+		return
+	}
+
+	s.Commit()
+
+	c.JSON(http.StatusOK, &model.GlobalResponse{
+		Success: true,
+		Message: "Order status updated successfully",
+	})
 }

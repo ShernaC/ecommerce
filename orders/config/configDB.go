@@ -62,4 +62,5 @@ func SyncDB() {
 	db.AutoMigrate(&model.CartItem{})
 	db.AutoMigrate(&model.Order{})
 	db.AutoMigrate(&model.OrderItem{})
+	db.AutoMigrate(&model.OrderTracking{})
 }

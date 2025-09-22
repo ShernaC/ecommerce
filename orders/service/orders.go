@@ -4,12 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	grpcclient "orders/grpc_client"
-	"orders/middleware"
 	"orders/model"
 	"orders/tools"
 	"time"
-	"utils/user"
+	"utils/middleware"
 
 	"gorm.io/gorm"
 )
@@ -67,7 +65,7 @@ func (s *Service) CreateOrder(ctx context.Context, cartID int, cartItemIDs []int
 	}
 
 	// grpc call
-	userDetails, err := grpcclient.GetUserDetails(ctx, &user.GetUserDetailsRequest{Id: int64(cart.UserID)})
+	userDetails, err := s.GetUserDetails(ctx, ctxData.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -266,4 +264,75 @@ func (s *Service) OrderGetHistoryByUserID(ctx context.Context) ([]*model.Order, 
 	}
 
 	return orders, nil
+}
+
+func (s *Service) OrderGetTrackingInfo(orderID int) ([]*model.OrderTracking, error) {
+	var (
+		trackingInfo []*model.OrderTracking
+	)
+
+	if err := s.DB.Model(&trackingInfo).Where("order_id = ?", orderID).Order("created_at DESC").Find(&trackingInfo).Error; err != nil {
+		return nil, err
+	}
+
+	return trackingInfo, nil
+}
+
+func (s *Service) OrderUpdateStatus(orderID int, status string) (bool, error) {
+	if orderID <= 0 || status == "" {
+		return false, fmt.Errorf("invalid input to update order status")
+	}
+
+	orderExist, err := s.CheckOrderExists(context.Background(), orderID)
+	if err != nil {
+		return false, err
+	}
+	if !orderExist {
+		return false, fmt.Errorf("order does not exist")
+	}
+
+	if !s.isValidOrderStatus(status) {
+		return false, fmt.Errorf("invalid order status")
+	}
+
+	if err := s.DB.Model(&model.Order{}).Where("id = ?", orderID).Update("status", status).Error; err != nil {
+		return false, err
+	}
+
+	trackingInfo := &model.OrderTracking{
+		OrderID:     orderID,
+		Status:      status,
+		Description: "",
+	}
+
+	addTrackingInfo, err := s.OrderAddTrackingInfo(orderID, trackingInfo)
+	if err != nil {
+		return false, err
+	}
+	if !addTrackingInfo {
+		return false, fmt.Errorf("failed to add tracking info")
+	}
+
+	return true, nil
+}
+
+func (s *Service) OrderAddTrackingInfo(orderID int, trackingInfo *model.OrderTracking) (bool, error) {
+	if orderID <= 0 || trackingInfo == nil || trackingInfo.Status == "" {
+		return false, fmt.Errorf("invalid input to add tracking info")
+	}
+
+	if err := s.DB.Model(&model.OrderTracking{}).Create(&trackingInfo).Error; err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (s *Service) isValidOrderStatus(status string) bool {
+	switch status {
+	case string(ORDER_STATUS_PENDING), string(ORDER_STATUS_PAID), string(ORDER_STATUS_SHIPPED), string(ORDER_STATUS_CANCELLED), string(ORDER_STATUS_COMPLETED):
+		return true
+	default:
+		return false
+	}
 }

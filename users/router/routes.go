@@ -2,7 +2,7 @@ package router
 
 import (
 	"users/controller"
-	"users/middleware"
+	"utils/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,13 +13,19 @@ func ApiRouter(r *gin.Engine) {
 	r.POST("/approval", controller.Approval)
 
 	auth := r.Group("")
-	auth.Use(middleware.IsLogin())
+	auth.Use(middleware.AuthMiddleware(), middleware.CORSMiddlewware(), middleware.IsLogin())
 	{
 		auth.POST("/refresh-token", controller.RefreshToken)
 		auth.POST("/logout", controller.Logout)
 		auth.GET("/profile/:id", controller.GetProfile)
 
 		auth.POST("/seller/register", controller.RegisterSeller)
-		auth.GET("/seller/profile/:id", controller.SellerProfile)
 	}
+
+	seller := r.Group("")
+	seller.Use(middleware.AuthMiddleware(), middleware.CORSMiddlewware(), middleware.IsLogin(), middleware.IsSeller())
+	{
+		seller.GET("/seller/profile/:id", controller.SellerProfile)
+	}
+
 }

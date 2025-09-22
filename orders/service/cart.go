@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
-	"orders/middleware"
 	"orders/model"
+	"utils/middleware"
 
 	"gorm.io/gorm"
 )

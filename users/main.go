@@ -8,8 +8,8 @@ import (
 	"sync"
 	"users/config"
 	"users/grpc/resolver"
-	"users/middleware"
 	"users/router"
+	"utils/middleware"
 	"utils/user"
 
 	"github.com/gin-gonic/gin"

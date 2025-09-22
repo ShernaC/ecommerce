@@ -6,10 +6,10 @@ import (
 	"net"
 	"orders/config"
 	"orders/grpc/resolver"
-	"orders/middleware"
 	"orders/router"
 	"os"
 	"sync"
+	"utils/middleware"
 	"utils/orders"
 
 	"github.com/gin-gonic/gin"

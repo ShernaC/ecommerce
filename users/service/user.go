@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"users/middleware"
 	"users/model"
 	"users/tools"
+	"utils/middleware"
 
 	"github.com/google/uuid"
 )
