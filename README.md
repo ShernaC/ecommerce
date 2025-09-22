@@ -4,7 +4,7 @@ A simple e-commerce platform built with microservices architecture using Go, gRP
 ## Architecture
 This project implements a microservices-based e-commerce system with the following services:
 
-- User Service - Handles user registration, authentication, and profile management
+- User Service - Handles user registration, authentication with JWT, and profile management
 - Product Service - Manages product catalog, inventory, and product information
 - Order Service - Processes orders, order history, and order status tracking
 
