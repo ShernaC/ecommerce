@@ -17,6 +17,10 @@ Each service is completely independent with its own database and communicates vi
 - Database: MySQL (per service)
 - (To be implemented) Message Queue: Redis (for async operations)
 
+## Future Implementations
+- Message Queue: Redis (for async operations)
+- Inventory Stock Prediction with Prophet and XGBoost 
+
 ## Prerequisites
 - Go 1.24 or higher
 - Docker and Docker Compose
